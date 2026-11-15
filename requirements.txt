@@ -1,0 +1,7 @@
+strands-agents==1.35.0
+openai>=2.0.0
+python-dotenv==1.2.2
+fastapi==0.122.0
+uvicorn==0.44.0
+pytest==8.3.5
+prometheus-client==0.21.1
