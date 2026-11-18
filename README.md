@@ -1,7 +1,7 @@
 # Agente inmobiliario con OpenAI
 
-Asistente de consola para buscar y recomendar departamentos en Chile. Usa
-herramientas locales para consultar el inventario de Inmotech en produccion y
+Asistente para buscar y recomendar departamentos en Chile. Usa
+herramientas locales para consultar un inventario inmobiliario externo y
 un modelo de OpenAI para interpretar consultas, elegir herramientas y redactar
 respuestas comerciales en espanol.
 
@@ -17,17 +17,13 @@ sirven para mostrar la progresion desde un agente basico a uno con herramientas.
 - Estimar una capacidad de compra referencial desde el ingreso mensual en CLP.
 - Mantener historial local de la conversacion en `sessions/`.
 
-La fuente de inventario por defecto es el endpoint QA:
-
-```text
-https://qa-1506.inmotech.cl/api/proyectos/seminuevos.php
-```
+La fuente de inventario se configura con la variable `INMOTECH_API_URL`.
 
 ## Requisitos
 
 - Python 3.11 o superior.
 - Una cuenta de OpenAI con una clave de API activa.
-- Acceso a Internet para OpenAI y la API de Inmotech.
+- Acceso a Internet para OpenAI y la API de inventario.
 
 ## Instalacion
 
@@ -46,7 +42,7 @@ repositorio.
 ```env
 OPENAI_API_KEY=tu_clave_de_openai
 OPENAI_MODEL=gpt-5-mini
-INMOTECH_API_URL=https://qa-1506.inmotech.cl/api/proyectos/seminuevos.php
+INMOTECH_API_URL=https://tu-api-de-inventario.example/propiedades
 ```
 
 `OPENAI_MODEL` es opcional; si no se indica, el proyecto usa `gpt-5-mini`.
@@ -71,9 +67,8 @@ Como esta el mercado en La Florida?
 Gano $2.000.000, que puedo comprar?
 ```
 
-Las consultas de ingreso se calculan con una cuota maxima referencial de 25 %
-del ingreso, un pie de 20 %, tasa anual de 4,5 %, plazo de 30 anos y UF de
-$39.000. Son estimaciones iniciales, no una preaprobacion bancaria.
+Las consultas de ingreso entregan una estimacion referencial de capacidad de
+compra. No constituyen una preaprobacion bancaria.
 
 ## API FastAPI
 
@@ -94,7 +89,7 @@ Endpoints disponibles:
 | Metodo | Ruta | Uso |
 | --- | --- | --- |
 | `GET` | `/health` | Confirma que el proceso esta activo. |
-| `GET` | `/ready` | Comprueba la conexion con Inmotech. |
+| `GET` | `/ready` | Comprueba la conexion con el inventario. |
 | `GET` | `/api/v1/properties` | Busca unidades con filtros por query string. |
 | `GET` | `/api/v1/projects/recommendations` | Recomienda proyectos segun filtros. |
 | `GET` | `/api/v1/market-summary` | Resume inventario y precios. |
@@ -118,7 +113,7 @@ Invoke-RestMethod -Method Post `
 ```
 
 `/api/v1/chat` necesita una clave OpenAI valida. Los endpoints de busqueda,
-mercado y capacidad funcionan solo con la fuente de Inmotech.
+mercado y capacidad funcionan solo con la fuente de inventario.
 
 ## Pruebas
 
@@ -130,14 +125,14 @@ Ejecuta las pruebas automatizadas con:
 
 Las pruebas no consultan servicios externos: inyectan un servicio simulado para
 validar rutas, filtros, errores HTTP, metricas y validacion de datos. El cliente
-de Inmotech tambien se prueba de forma aislada.
+de inventario tambien se prueba de forma aislada.
 
 ## Integracion continua
 
 El workflow `.github/workflows/ci.yml` se ejecuta en cada `push`, pull request
 y ejecucion manual. Verifica dependencias, compila el proyecto y ejecuta las
 pruebas en Python 3.11 y 3.12. No utiliza claves de OpenAI ni consulta la API
-de Inmotech durante las pruebas.
+de inventario durante las pruebas.
 
 ## Observabilidad
 
@@ -146,7 +141,7 @@ de Inmotech durante las pruebas.
   por un proveedor de logs.
 - `GET /metrics` expone contadores y latencias en formato Prometheus.
 - `GET /health` confirma que el proceso esta activo y `GET /ready` valida la
-  conexion con el inventario de Inmotech.
+  conexion con el inventario.
 
 ## Arquitectura
 
@@ -154,7 +149,7 @@ de Inmotech durante las pruebas.
 Cliente HTTP
     |
     v
-Routers FastAPI -> Servicios de negocio -> Cliente Inmotech -> API QA
+Routers FastAPI -> Servicios de negocio -> Cliente HTTP -> API de inventario
     |                    |
     |                    +-------------------------------> OpenAI
     v
@@ -179,7 +174,7 @@ La logica original en `ia_inmo.py` conserva las herramientas de dominio:
 | `app/main.py` | Composicion FastAPI, middleware, metricas y manejo de errores. |
 | `app/routers/` | Capa HTTP separada por responsabilidad. |
 | `app/services/` | Casos de uso y adaptacion de la logica inmobiliaria. |
-| `app/clients/` | Cliente HTTP de Inmotech. |
+| `app/clients/` | Cliente HTTP del inventario. |
 | `app/core/` | Configuracion, excepciones y observabilidad. |
 | `tests/` | Pruebas de API y cliente externo aisladas. |
 | `.env.example` | Plantilla de configuracion sin secretos. |
