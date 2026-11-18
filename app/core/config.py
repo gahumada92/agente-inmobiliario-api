@@ -23,10 +23,7 @@ class Settings:
             app_name="API Agente Inmobiliario",
             app_version="1.1.0",
             api_prefix="/api/v1",
-            inmotech_api_url=os.getenv(
-                "INMOTECH_API_URL",
-                "https://qa-1506.inmotech.cl/api/proyectos/seminuevos.php",
-            ),
+            inmotech_api_url=os.getenv("INMOTECH_API_URL", "").strip(),
             openai_model=os.getenv("OPENAI_MODEL", "gpt-5-mini"),
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         )

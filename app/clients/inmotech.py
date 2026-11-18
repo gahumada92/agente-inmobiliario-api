@@ -11,6 +11,8 @@ class InmotechClient:
     timeout_seconds: int = 20
 
     def listar_propiedades(self) -> list[dict]:
+        if not self.api_url:
+            raise ValueError("INMOTECH_API_URL no esta configurada.")
         request = Request(
             self.api_url,
             headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"},
